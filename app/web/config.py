@@ -39,7 +39,7 @@ class BaseConfig(BaseSettings):
         env_prefix="APP__",
     )
     ldap: LDAPConfig
-    pg: PostgresDBConfig
+    # pg: PostgresDBConfig
 
 
 def setup_config(app: "FastAPI"):

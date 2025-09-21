@@ -12,7 +12,7 @@ class UserAuthoRepository(LdapAccessor):
         async with self.admin_connection() as conn:
             conn.search(
                 search_base=self.config.base_dn,
-                search_filter="(objectClass=organizationalPerson)",
+                search_filter="(objectClass=inetOrgPerson)",
                 search_scope=SUBTREE,
                 attributes=["cn", "sn", "uid", "gidNumber"],
             )
@@ -22,9 +22,23 @@ class UserAuthoRepository(LdapAccessor):
 
             return {"users": users}
 
-    async def autho_user(self, login: str, password: str):
+    async def autho_user(self, user_dn: str, password: str):
         try:
-            async with self.user_connection(login, password) as conn:
-                return True
-        except Exception:
+            async with self.user_connection(user_dn, password) as conn:
+                if conn.result["result"] == 0:
+                    return True
+        except Exception as ex:
             return False
+
+    async def get_user_dn(self, username: str):
+        firstname, lastname = username.split(".")
+        async with self.admin_connection() as conn:
+            conn.search(
+                search_base={self.config.base_dn},
+                search_filter=f"(cn={firstname} {lastname})",
+                search_scope=SUBTREE,
+                attributes=["cn"],
+            )
+            if not conn.entries:
+                return None
+            return conn.entries[0].entry_dn

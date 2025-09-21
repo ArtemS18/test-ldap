@@ -20,6 +20,8 @@ class LdapAccessor:
         self.server = None
 
     def _create_connection(self, login: str = None, password: str = None) -> Connection:
+        login = login or self.config.login
+        password = password or self.config.password
         return Connection(self.server, login, password, auto_bind=True)
 
     @asynccontextmanager
