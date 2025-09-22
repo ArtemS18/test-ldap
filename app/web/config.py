@@ -19,15 +19,28 @@ class LDAPConfig(BaseModel):
 
 class PostgresDBConfig(BaseModel):
     host: str = "localhost"
-    port: int = 5432
-    login: str
-    password: str
-    base_db: str
+    port: int = 5434
+    login: str = "postgres"
+    password: str = "mypassword"
+    base_db: str = "db"
     driver: str = "postgresql+asyncpg"
 
     @property
     def url(self):
-        return f"{self.driver}:://{self.login}:{self.password}@{self.host}:{self.port}/{self.base_db}"
+        return f"{self.driver}://{self.login}:{self.password}@{self.host}:{self.port}/{self.base_db}"
+
+
+class JWTConfig(BaseModel):
+    access_expire: int = 1
+    refresh_expire_days: int = 7
+    secret_key: str
+    algorithm: str
+
+
+class WebConfig(BaseModel):
+    host: str = "localhost"
+    port: int = 8080
+    jwt: JWTConfig
 
 
 class BaseConfig(BaseSettings):
@@ -39,7 +52,8 @@ class BaseConfig(BaseSettings):
         env_prefix="APP__",
     )
     ldap: LDAPConfig
-    # pg: PostgresDBConfig
+    web: WebConfig
+    pg: PostgresDBConfig
 
 
 def setup_config(app: "FastAPI"):

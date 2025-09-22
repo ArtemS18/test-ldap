@@ -51,3 +51,14 @@ USER_NOT_FOUND = HTTPException(
     detail="User not found",
     headers={"WWW-Authenticate": "Bearer"},
 )
+
+REFRESH_TOKEN_NOT_FOUND = HTTPException(
+    status_code=status.HTTP_401_UNAUTHORIZED,
+    detail="Refresh token not found",
+    headers={"WWW-Authenticate": "Bearer"},
+)
+ACCESS_TOKEN_NOT_FOUND = HTTPException(
+    status_code=status.HTTP_401_UNAUTHORIZED,
+    detail="Access token not found",
+    headers={"WWW-Authenticate": "Bearer"},
+)

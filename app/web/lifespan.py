@@ -1,4 +1,5 @@
 from contextlib import asynccontextmanager
+from app.base.orm_base import BaseORM
 import logging
 import typing
 
@@ -10,8 +11,7 @@ log = logging.getLogger(__name__)
 
 @asynccontextmanager
 async def lifispan_app(app: "FastAPI"):
-    await app.store.ldap_accessor.connect()
-    await app.store.autho_repo.connect()
+    await app.store.connect_all()
+    await app.store.user_repo.init_models()
     yield
-    await app.store.autho_repo.disconnect()
-    await app.store.autho_repo.disconnect()
+    await app.store.disconnect_all()
