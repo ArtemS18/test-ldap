@@ -1,12 +1,9 @@
-from datetime import datetime, timedelta
-from app.auth.schemas.refresh_tokens import RefreshToken, RefreshTokenCreate
-from app.auth.schemas.user_autho import SuccessAuthoResponse
 from app.auth.services.jwt_tokens import JWTService
 from app.lib.web import exeptions
 from app.store.ldap.repository import UserAuthoRepository
 from app.store.postgres.repository.jwt_repo import JWTRepository
 from app.store.postgres.repository.user_repo import UserRepository
-from app.users.schemas.users import User
+from app.users.entities.users import User
 
 
 class AuthoService:
@@ -33,4 +30,11 @@ class AuthoService:
         user = await self.user_repo.get_user_by_username(username)
         if not user:
             raise exeptions.USER_NOT_FOUND
-        return User.model_validate(user)
+        return User(
+            id=user.id,
+            username=user.username,
+            department_id=user.department_id,
+            department=user.department.name if user.department else None,
+            role_id=user.role_id,
+            role=user.role.name,
+        )

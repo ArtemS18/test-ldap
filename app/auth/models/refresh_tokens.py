@@ -6,7 +6,7 @@ from sqlalchemy import ForeignKey, DateTime, UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 if typing.TYPE_CHECKING:
-    from app.store.postgres.models.users import UserORM
+    from app.users.models.users import UserORM
 
 
 class RefreshTokenORM(BaseORM):

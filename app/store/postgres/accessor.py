@@ -6,14 +6,12 @@ from sqlalchemy.ext.asyncio import (
     async_sessionmaker,
     create_async_engine,
 )
+from contextlib import asynccontextmanager
 
 from app.base.orm_base import BaseORM
-from .models import *
 
 if typing.TYPE_CHECKING:
     from app.lib.web.models import FastAPI
-
-V = typing.TypeVar("V")
 
 
 class PgAccessor:
@@ -43,3 +41,9 @@ class PgAccessor:
             if commit:
                 await session.commit()
             return result
+
+    @asynccontextmanager
+    async def get_tansaction(self):
+        async with self.session_maker() as session:
+            async with session.begin() as transaction:
+                yield transaction

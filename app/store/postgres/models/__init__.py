@@ -1,6 +1,6 @@
-from .departments import Department
-from .role import RoleORM
-from .users import UserORM
-from .refresh_tokens import RefreshTokenORM
+from ....users.models.departments import DepartmentORM
+from ....users.models.role import RoleORM
+from ....users.models.users import UserORM
+from ....auth.models.refresh_tokens import RefreshTokenORM
 
-__all__ = ["Department", "RoleORM", "UserORM", "RefreshTokenORM"]
+__all__ = ["DepartmentORM", "RoleORM", "UserORM", "RefreshTokenORM"]

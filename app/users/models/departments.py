@@ -3,6 +3,6 @@ from sqlalchemy import VARCHAR
 from sqlalchemy.orm import Mapped, mapped_column
 
 
-class Department(BaseORM):
+class DepartmentORM(BaseORM):
     __tablename__ = "departments"
     name: Mapped[str] = mapped_column(VARCHAR(100), nullable=False, unique=True)

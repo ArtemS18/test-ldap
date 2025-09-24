@@ -1,9 +1,13 @@
 from datetime import datetime, timedelta, timezone
 import uuid
 import jwt
-from app.auth.schemas.refresh_tokens import RefreshTokenCreate
+from app.auth.services.dto import RefreshTokenCreate
+from app.auth.schemas.refresh_token import (
+    SuccessRefreshResponse,
+)
+from app.auth.models.refresh_tokens import RefreshTokenORM
 from app.store.postgres.repository.jwt_repo import JWTRepository
-from app.users.schemas.users import User
+from app.users.entities.users import User
 from app.web.config import JWTConfig
 from app.lib.web import exeptions
 
@@ -52,45 +56,65 @@ class JWTService:
             raise exeptions.JWT_BAD_CREDENSIALS
         return payload
 
+    def verifi_jwt_access_token(self, token: str) -> User:
+        payload = self.verifi_token(token)
+        if payload.get("token_type") != "access":
+            raise exeptions.JWT_BAD_CREDENSIALS
+        user = User(
+            id=payload.get("user_id"),
+            username=payload.get("sub"),
+            role_id=payload.get("role_id"),
+            role=payload.get("role"),
+            department_id=payload.get("dep_id"),
+            department=payload.get("dep"),
+        )
+        return user
+
     async def create_jwt_access_token(self, user: User) -> str:
         payload = {
             "sub": user.username,
             "user_id": user.id,
-            "role": user.role_id,
-            "dep": user.department_id,
+            "role_id": user.role_id,
+            "role": user.role,
+            "dep_id": user.department_id,
+            "dep": user.department,
             "token_type": "access",
         }
         token = self.create_token(payload)
         return token
 
-    async def create_jwt_refresh_token(self, user: User) -> str:
+    async def create_jwt_refresh_token(self, user: User) -> RefreshTokenCreate:
         now = datetime.now(timezone.utc)
         refresh_token_expire = now + timedelta(days=self.config.refresh_expire_days)
         refresh_token_uuid = uuid.uuid4()
 
         payload = {
             "sub": user.username,
-            "id": user.id,
+            "user_id": user.id,
             "token": str(refresh_token_uuid),
-            "token_type": "access",
+            "token_type": "refresh",
         }
         token = self.create_token(payload, expire_at=refresh_token_expire)
-        await self.jwt_repo.save_refresh_token(
-            RefreshTokenCreate(
-                user_id=user.id,
-                token=refresh_token_uuid,
-                expires_at=refresh_token_expire,
-            )
-        )
-        return token
 
-    async def refresh_jwt_access_token(self, refresh_token: str) -> str:
+        return RefreshTokenCreate(
+            user_id=user.id,
+            token_uuid=refresh_token_uuid,
+            token=token,
+            expires_at=refresh_token_expire,
+        )
+
+    async def create_and_save_jwt_refresh_token(self, user: User) -> str:
+        token_data = await self.create_jwt_refresh_token(user)
+        await self.jwt_repo.save_refresh_token(token_data)
+        return token_data.token
+
+    async def verifi_jwt_refresh_token(self, refresh_token: str):
         payload = self.verifi_token(refresh_token)
         if payload.get("token_type") != "refresh":
             raise exeptions.JWT_BAD_CREDENSIALS
 
         user_id = payload.get("user_id")
-        token = payload.get("sub")
+        token = payload.get("token")
 
         if not user_id or not token:
             raise exeptions.JWT_BAD_CREDENSIALS
@@ -104,8 +128,33 @@ class JWTService:
 
         if refresh_token_orm.expires_at < datetime.now(timezone.utc):
             raise exeptions.JWT_TOKEN_EXPIRED
+        return refresh_token_orm
 
-        user = User.model_validate(refresh_token_orm.user)
+    async def refresh_jwt_tokens(
+        self, old_refresh_token: str
+    ) -> SuccessRefreshResponse:
+        old_refresh_token_orm = await self.verifi_jwt_refresh_token(old_refresh_token)
+        user = User.model_validate(old_refresh_token_orm.user)
+        access_token = await self.create_jwt_access_token(user)
+        refresh_token = await self._rotate_jwt_refresh_token(old_refresh_token_orm)
+        return SuccessRefreshResponse(
+            access_token=access_token, refresh_token=refresh_token
+        )
 
-        token = await self.create_jwt_access_token(user)
-        return token
+    async def _rotate_jwt_refresh_token(
+        self, old_refresh_token: RefreshTokenORM
+    ) -> str:
+        new_refresh_data = await self.create_jwt_refresh_token(old_refresh_token.user)
+        await self.jwt_repo.rotate_refresh_token(
+            old_refresh_token.token, new_refresh_data
+        )
+        return new_refresh_data.token
+
+    async def delete_jwt_refresh_token(
+        self, refresh_token: str, delete_all_tokens: bool = False
+    ):
+        refresh_token_orm = await self.verifi_jwt_refresh_token(refresh_token)
+        if delete_all_tokens:
+            await self.jwt_repo.delete_all_refresh_tokens(refresh_token_orm.user_id)
+        else:
+            await self.jwt_repo.delete_refresh_token(refresh_token_orm.token)
