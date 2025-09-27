@@ -52,4 +52,4 @@ jobs:
           APP__WEB__JWT__SECRET_KEY: ${{ secrets.APP__WEB__JWT__SECRET_KEY }}
           APP__WEB__JWT__ALGORITHM: HS256
       run: |
-        pytest
+        poetry run pytest -vv
