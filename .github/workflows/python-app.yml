@@ -1,0 +1,53 @@
+# This workflow will install Python dependencies, run tests and lint with a single version of Python
+# For more information see: https://docs.github.com/en/actions/automating-builds-and-tests/building-and-testing-python
+
+name: Python application
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v4
+    - name: Set up Python 3.13
+      uses: actions/setup-python@v3
+      with:
+        python-version: "3.13"
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install pytest poetry
+        poetry install
+        
+    - name: Test with pytest
+      env:
+          APP__PG__HOST: localhost
+          APP__PG__PORT: 5434
+          APP__PG__LOGIN: ${{ secrets.APP__PG__LOGIN }}
+          APP__PG__PASSWORD: ${{ secrets.APP__PG__PASSWORD }}
+          APP__PG__BASE_DB: db
+  
+          APP__LDAP__HOST: localhost
+          APP__LDAP__PORT: 389
+          APP__LDAP__LOGIN: cn=admin,dc=mycompany,dc=local
+          APP__LDAP__PASSWORD: ${{ secrets.APP__LDAP__PASSWORD }}
+          APP__LDAP__BASE_DN: dc=mycompany,dc=local
+          APP__LDAP__ORGANISATION: MyCompany
+          APP__LDAP__DOMAIN: mycompany.local
+          
+          APP__WEB__JWT__ACCESS_EXPIRE: 1
+          APP__WEB__JWT__SECRET_KEY: ${{ secrets.APP__WEB__JWT__SECRET_KEY }}
+          APP__WEB__JWT__ALGORITHM: HS256
+      run: |
+        pytest
