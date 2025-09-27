@@ -30,11 +30,4 @@ class AuthoService:
         user = await self.user_repo.get_user_by_username(username)
         if not user:
             raise exeptions.USER_NOT_FOUND
-        return User(
-            id=user.id,
-            username=user.username,
-            department_id=user.department_id,
-            department=user.department.name if user.department else None,
-            role_id=user.role_id,
-            role=user.role.name,
-        )
+        return User.orm_validate(user)

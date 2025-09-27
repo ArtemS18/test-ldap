@@ -20,9 +20,9 @@ class LDAPConfig(BaseModel):
 class PostgresDBConfig(BaseModel):
     host: str = "localhost"
     port: int = 5434
-    login: str = "postgres"
-    password: str = "mypassword"
-    base_db: str = "db"
+    login: str
+    password: str
+    base_db: str
     driver: str = "postgresql+asyncpg"
 
     @property
@@ -39,7 +39,7 @@ class JWTConfig(BaseModel):
 
 class WebConfig(BaseModel):
     host: str = "localhost"
-    port: int = 8080
+    port: int = 8082
     jwt: JWTConfig
 
 

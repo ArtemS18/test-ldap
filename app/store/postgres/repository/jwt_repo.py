@@ -4,6 +4,7 @@ from sqlalchemy.orm import selectinload
 from app.auth.services.dto import RefreshTokenCreate
 from app.store.postgres.accessor import PgAccessor
 from app.auth.models.refresh_tokens import RefreshTokenORM
+from app.users.models.users import UserORM
 
 
 class JWTRepository(PgAccessor):
@@ -28,7 +29,10 @@ class JWTRepository(PgAccessor):
             .where(
                 (RefreshTokenORM.token == token) & (RefreshTokenORM.user_id == user_id)
             )
-            .options(selectinload(RefreshTokenORM.user))
+            .options(
+                selectinload(RefreshTokenORM.user).selectinload(UserORM.role),
+                selectinload(RefreshTokenORM.user).selectinload(UserORM.department),
+            )
         )
         res = await self._execute(query, commit=False)
         token_orm = res.scalar_one_or_none()

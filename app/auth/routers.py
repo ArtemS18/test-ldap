@@ -29,7 +29,7 @@ async def autho_handler(
     access_token = await jwt_service.create_jwt_access_token(user)
     refresh_token = await jwt_service.create_and_save_jwt_refresh_token(user)
     return SuccessAuthoResponse(
-        access_token=access_token, refresh_token=refresh_token, role=user.role
+        access_token=access_token, refresh_token=refresh_token, role=user.role.name
     )
 
 

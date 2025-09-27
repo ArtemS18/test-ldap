@@ -1,4 +1,5 @@
 from datetime import datetime, timedelta, timezone
+import logging
 import uuid
 import jwt
 from app.auth.services.dto import RefreshTokenCreate
@@ -7,9 +8,13 @@ from app.auth.schemas.refresh_token import (
 )
 from app.auth.models.refresh_tokens import RefreshTokenORM
 from app.store.postgres.repository.jwt_repo import JWTRepository
+from app.users.entities.departments import Department
+from app.users.entities.roles import Role
 from app.users.entities.users import User
 from app.web.config import JWTConfig
 from app.lib.web import exeptions
+
+log = logging.getLogger(name=__name__)
 
 
 class JWTService:
@@ -64,9 +69,9 @@ class JWTService:
             id=payload.get("user_id"),
             username=payload.get("sub"),
             role_id=payload.get("role_id"),
-            role=payload.get("role"),
+            role=Role(id=payload.get("role_id"), name=payload.get("role")),
             department_id=payload.get("dep_id"),
-            department=payload.get("dep"),
+            department=Department(id=payload.get("dep_id"), name=payload.get("dep")),
         )
         return user
 
@@ -75,9 +80,9 @@ class JWTService:
             "sub": user.username,
             "user_id": user.id,
             "role_id": user.role_id,
-            "role": user.role,
+            "role": user.role.name,
             "dep_id": user.department_id,
-            "dep": user.department,
+            "dep": user.department.name,
             "token_type": "access",
         }
         token = self.create_token(payload)
@@ -134,7 +139,8 @@ class JWTService:
         self, old_refresh_token: str
     ) -> SuccessRefreshResponse:
         old_refresh_token_orm = await self.verifi_jwt_refresh_token(old_refresh_token)
-        user = User.model_validate(old_refresh_token_orm.user)
+        log.info(old_refresh_token_orm.user.__dict__)
+        user = User.orm_validate(old_refresh_token_orm.user)
         access_token = await self.create_jwt_access_token(user)
         refresh_token = await self._rotate_jwt_refresh_token(old_refresh_token_orm)
         return SuccessRefreshResponse(

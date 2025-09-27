@@ -62,3 +62,10 @@ ACCESS_TOKEN_NOT_FOUND = HTTPException(
     detail="Access token not found",
     headers={"WWW-Authenticate": "Bearer"},
 )
+
+
+FORBIDDEN_ROLE = HTTPException(
+    status_code=status.HTTP_403_FORBIDDEN, detail="Not valid role"
+)
+
+NOT_FOUND = HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Not found")

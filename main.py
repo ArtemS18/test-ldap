@@ -4,7 +4,7 @@ from app.web.app import setup_app
 
 def main():
     app = setup_app()
-    run(app, host="localhost", port=8082)
+    run(app, host=app.config.web.host, port=app.config.web.port)
 
 
 if __name__ == "__main__":
