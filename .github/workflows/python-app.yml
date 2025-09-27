@@ -33,6 +33,7 @@ jobs:
         
     - name: Test with pytest
       env:
+          PYTHONPATH: . pytest
           APP__PG__HOST: localhost
           APP__PG__PORT: 5434
           APP__PG__LOGIN: ${{ secrets.APP__PG__LOGIN }}
