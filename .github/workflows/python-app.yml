@@ -27,8 +27,9 @@ jobs:
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
+
         pip install pytest pytest-asyncio poetry
-        poetry install
+        poetry install --no-root
         
     - name: Test with pytest
       env:
