@@ -5,11 +5,11 @@ services:
     image: osixia/openldap:1.5.0
     container_name: openldap
     environment:
-      - LDAP_ORGANISATION=MyCompany
-      - LDAP_DOMAIN=mycompany.local
-      - LDAP_ADMIN_PASSWORD=adminpassword
+      - LDAP_ORGANISATION=${APP__LDAP__ORGANISATION}
+      - LDAP_DOMAIN=${APP__LDAP__DOMAIN}
+      - LDAP_ADMIN_PASSWORD=${APP__LDAP__PASSWORD}
     ports:
-      - "389:389"     # LDAP
+      - "${APP__LDAP__PORT}:389"     # LDAP
       - "636:636"     # LDAPS
     volumes:
       - ./ldap_data:/var/lib/ldap
@@ -27,3 +27,22 @@ services:
     depends_on:
       - ldap
     restart: unless-stopped
+
+  postgres:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_USER: ${APP__PG__LOGIN}
+      POSTGRES_PASSWORD: ${APP__PG__PASSWORD}
+      POSTGRES_DB: ${APP__PG__BASE_DB}
+    ports:
+      - "${APP__PG__PORT}:5432"
+    volumes:
+      - my_postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U admin -d bd"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  my_postgres_data:
