@@ -90,10 +90,11 @@ jobs:
           token: ${{ secrets.TG_API_KEY }}
           format: markdown
           message: |
-            ✅ **Commit Confirmed**
-            Branch: ${{ github.ref_name }}
-            Author: ${{ github.event.pusher.name }}
-            Message: ${{ github.event.head_commit.message }}
+            ✅ *New Commit*
+
+            `branch:` ${{ github.ref_name }}
+            `author:` ${{ github.event.pusher.name }}
+            `message:` ${{ github.event.head_commit.message }}
 
             See changes: https://github.com/${{ github.repository }}/commit/${{github.sha}}
 
