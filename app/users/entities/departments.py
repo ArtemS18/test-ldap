@@ -2,5 +2,5 @@ from app.base.pydantic_base import Base
 
 
 class Department(Base):
-    id: int 
+    id: int
     name: str

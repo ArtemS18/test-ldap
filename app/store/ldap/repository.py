@@ -27,7 +27,7 @@ class UserAuthoRepository(LdapAccessor):
             async with self.user_connection(user_dn, password) as conn:
                 if conn.result["result"] == 0:
                     return True
-        except Exception as ex:
+        except Exception:
             return False
 
     async def get_user_dn(self, username: str):

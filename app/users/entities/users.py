@@ -1,4 +1,3 @@
-from typing import Literal
 from app.base.pydantic_base import Base
 from app.users.models.users import UserORM
 from .departments import Department
