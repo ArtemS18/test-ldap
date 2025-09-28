@@ -30,7 +30,9 @@ jobs:
         python-version: '3.13'
         cache: 'poetry'
     - name: Install dependencies
-      run: poetry install --no-root
+      run: |
+        poetry env use 3.13
+        poetry install --no-root
     - name: Ruff check
       run: poetry run ruff check .
   tests:
@@ -50,7 +52,9 @@ jobs:
         python-version: "3.13"
         cache: "poetry"
     - name: Install dependencies
-      run: poetry install --no-root
+      run: |
+        poetry env use 3.13
+        poetry install --no-root
     - name: Test with pytest
       env:
           PYTHONPATH: .
