@@ -7,6 +7,7 @@ if typing.TYPE_CHECKING:
     from app.lib import FastAPI
 
 ENV_PATH = "env/.local.env"
+EXAMPLE_ENV_PATH = "env/.example.env"
 
 
 class LDAPConfig(BaseModel):
@@ -46,7 +47,7 @@ class WebConfig(BaseModel):
 class BaseConfig(BaseSettings):
     model_config = SettingsConfigDict(
         case_sensitive=False,
-        env_file=ENV_PATH,
+        env_file=(EXAMPLE_ENV_PATH, ENV_PATH),
         extra="ignore",
         env_nested_delimiter="__",
         env_prefix="APP__",
