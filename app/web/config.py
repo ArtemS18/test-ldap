@@ -47,7 +47,6 @@ class WebConfig(BaseModel):
 class BaseConfig(BaseSettings):
     model_config = SettingsConfigDict(
         case_sensitive=False,
-        env_file=(EXAMPLE_ENV_PATH, ENV_PATH),
         extra="ignore",
         env_nested_delimiter="__",
         env_prefix="APP__",
@@ -58,4 +57,4 @@ class BaseConfig(BaseSettings):
 
 
 def setup_config(app: "FastAPI"):
-    app.config = BaseConfig(_env_file=ENV_PATH)
+    app.config = BaseConfig(_env_file=(EXAMPLE_ENV_PATH, ENV_PATH))
