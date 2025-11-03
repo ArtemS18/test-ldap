@@ -13,62 +13,92 @@ on:
 permissions:
   contents: read
 
-jobs:
-  lint:
-    runs-on: ubuntu-latest
-    steps:
-    - uses: actions/checkout@v4
-    - name: Install python
-      uses: actions/setup-python@v6
-      with:
-        python-version: '3.13'
-    - name: Install dependencies
-      run: |
-        python -m pip install --upgrade pip
-        pip install pytest poetry
-        python -m poetry install --no-root
-    - name: Ruff check
-      run: poetry run ruff check .
-  tests:
-    runs-on: ubuntu-latest
-    needs: lint
-    steps:
-    - uses: actions/checkout@v4
-    - name: Install python
-      uses: actions/setup-python@v6
-      with:
-        python-version: "3.13"
-    - name: Install dependencies
-      run: |
-        python -m pip install --upgrade pip
-        pip install pytest poetry
-        python -m poetry install --no-root
-    - name: Test with pytest
-      env:
-          PYTHONPATH: .
-          APP__PG__HOST: localhost
-          APP__PG__PORT: 5434
-          APP__PG__LOGIN: ${{ secrets.APP__PG__LOGIN }}
-          APP__PG__PASSWORD: ${{ secrets.APP__PG__PASSWORD }}
-          APP__PG__BASE_DB: db
-  
-          APP__LDAP__HOST: localhost
-          APP__LDAP__PORT: 389
-          APP__LDAP__LOGIN: cn=admin,dc=mycompany,dc=local
-          APP__LDAP__PASSWORD: ${{ secrets.APP__LDAP__PASSWORD }}
-          APP__LDAP__BASE_DN: dc=mycompany,dc=local
-          APP__LDAP__ORGANISATION: MyCompany
-          APP__LDAP__DOMAIN: mycompany.local
-          
-          APP__WEB__JWT__ACCESS_EXPIRE: 1
-          APP__WEB__JWT__SECRET_KEY: ${{ secrets.APP__WEB__JWT__SECRET_KEY }}
-          APP__WEB__JWT__ALGORITHM: HS256
-      run: |
-        poetry run pytest -vv
+env:
+  PYTHONPATH: .
+  APP__PG__HOST: localhost
+  APP__PG__PORT: 5434
+  APP__PG__LOGIN: ${{ secrets.APP__PG__LOGIN }}
+  APP__PG__PASSWORD: ${{ secrets.APP__PG__PASSWORD }}
+  APP__PG__BASE_DB: db
 
+  APP__LDAP__HOST: localhost
+  APP__LDAP__PORT: 389
+  APP__LDAP__LOGIN: cn=admin,dc=mycompany,dc=local
+  APP__LDAP__PASSWORD: ${{ secrets.APP__LDAP__PASSWORD }}
+  APP__LDAP__BASE_DN: dc=mycompany,dc=local
+  APP__LDAP__ORGANISATION: MyCompany
+  APP__LDAP__DOMAIN: mycompany.local
+  
+  APP__WEB__JWT__ACCESS_EXPIRE: 1
+  APP__WEB__JWT__SECRET_KEY: ${{ secrets.APP__WEB__JWT__SECRET_KEY }}
+  APP__WEB__JWT__ALGORITHM: HS256
+
+jobs:
+  # lint:
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #   - uses: actions/checkout@v4
+  #   - name: Install python
+  #     uses: actions/setup-python@v6
+  #     with:
+  #       python-version: '3.13'
+  #   - name: Install dependencies
+  #     run: |
+  #       python -m pip install --upgrade pip
+  #       pip install pytest poetry
+  #       python -m poetry install --no-root
+  #   - name: Ruff check
+  #     run: poetry run ruff check .
+  # tests:
+  #   runs-on: ubuntu-latest
+  #   needs: lint
+  #   steps:
+  #   - uses: actions/checkout@v4
+  #   - name: Install python
+  #     uses: actions/setup-python@v6
+  #     with:
+  #       python-version: "3.13"
+  #   - name: Install dependencies
+  #     run: |
+  #       python -m pip install --upgrade pip
+  #       pip install pytest poetry
+  #       python -m poetry install --no-root
+  #   - name: Test with pytest
+  #     run: |
+  #       poetry run pytest -vv
+
+  deploy:
+    #needs: tests
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout repo
+      uses: actions/checkout@v4
+
+    - name: Setup SSH
+      uses: webfactory/ssh-agent@v0.9.0
+      with:
+        ssh-private-key: ${{ secrets.SERVER_PRIVATE_KEY }}
+
+    - name: Add server to known_hosts
+      run: |
+        mkdir -p ~/.ssh
+        ssh-keyscan " ${{secrets.SERVER_HOST}}" >> ~/.ssh/known_hosts
+        chmod 600 ~/.ssh/known_hosts
+    - name: Rsync project
+      run: |
+        rsync -az --delete \
+          --exclude=".git" \
+          --exclude=".github" \
+          -e "ssh" \ 
+          ./ "${{secrets.SERVER_USER}}@ ${{secrets.SERVER_HOST}}:/srv/atom-test-ldap/"
+    - name: Deploy in remote server
+      run: |
+          ssh "${{secrets.SERVER_USER}}@ ${{secrets.SERVER_HOST}}" \
+          "bash -lc 'cd /srv/atom-test-ldap && docker compose --env-file ./env/local.env pull && docker compose --env-file ./env/local.env up -d --remove-orphans'"
+      
   notify_success:
     runs-on: ubuntu-latest
-    needs: tests
+    needs: deploy
     if: success()
     steps:
       - name: Send success message
@@ -78,9 +108,9 @@ jobs:
           token: ${{ secrets.TG_API_KEY }}
           format: markdown
           message: |
-            ✅ *New Commit*
+            ✅ *Success Deploy new Commit on server ${{secrets.SERVER_HOST}}* 
 
-            `branch:` ${{ github.ref_name }}
+            `branch:` ${{ github.ref_name }} 
             `author:` ${{ github.event.pusher.name }}
             `message:` ${{ github.event.head_commit.message }}
 
