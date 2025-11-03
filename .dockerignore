@@ -1,0 +1,4 @@
+docker-compose.yaml
+.vscode/
+__pycache__/
+.ruff_cache/

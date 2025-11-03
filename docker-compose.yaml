@@ -1,6 +1,14 @@
 version: "3.9"
 
 services:
+  backend: 
+    build: ./
+    environment:
+      - APP__LDAP__HOST=ldap
+      - APP__PG__HOST=postgres
+      - APP__PG__PORT=5432
+    ports: ["8081:${APP__WEB__PORT}"]
+    command: ["python", "main.py"]
   ldap:
     image: osixia/openldap:1.5.0
     container_name: openldap
@@ -39,7 +47,7 @@ services:
     volumes:
       - my_postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U admin -d bd"]
+      test: ["CMD-SHELL", "pg_isready -U postgres -d db"]
       interval: 5s
       timeout: 5s
       retries: 5
