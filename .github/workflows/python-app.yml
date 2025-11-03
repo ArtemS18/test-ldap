@@ -15,6 +15,7 @@ permissions:
 
 env:
   PYTHONPATH: .\
+  APP_CONFIG: "env/pod.env"
   APP__WEB__PORT: 8080
   APP__PG__HOST: localhost
   APP__PG__PORT: 5434
@@ -98,6 +99,7 @@ jobs:
       run: |
         umask 177; mkdir -p env
         {
+          echo "APP_CONFIG=${{env.APP_CONFIG}}"
           echo "APP__WEB__PORT=${{ env.APP__WEB__PORT }}"
           echo "APP__PG__HOST=${{ env.APP__PG__HOST }}"
           echo "APP__PG__PORT=${{ env.APP__PG__PORT }}"
@@ -114,19 +116,17 @@ jobs:
           echo "APP__WEB__JWT__ACCESS_EXPIRE=${{ env.APP__WEB__JWT__ACCESS_EXPIRE }}"
           echo "APP__WEB__JWT__SECRET_KEY=${{ env.APP__WEB__JWT__SECRET_KEY }}"
           echo "APP__WEB__JWT__ALGORITHM=${{ env.APP__WEB__JWT__ALGORITHM }}"
-        } > env/prod.env
+        } > ${{env.APP_CONFIG}}
     - name: Upload .env to server
       run: |
-        DEST="/home/${{secrets.SERVER_USER}}/atom-test-ldap/env"
-        ssh -o StrictHostKeyChecking=accept-new "${{secrets.SERVER_USER}}@${{secrets.SERVER_HOST}}" "mkdir -p '$DEST' && chmod 700 '$DEST'"
-        scp -o StrictHostKeyChecking=accept-new env/prod.env "${{secrets.SERVER_USER}}@${{secrets.SERVER_HOST}}:$DEST/prod.env.new"
-        ssh -o StrictHostKeyChecking=accept-new "${{secrets.SERVER_USER}}@${{secrets.SERVER_HOST}}" "mv -f '$DEST/prod.env.new' '$DEST/prod.env' && chmod 600 '$DEST/prod.env'"
+        DEST="/home/${{secrets.SERVER_USER}}/atom-test-ldap/"
+        scp -o StrictHostKeyChecking=accept-new ${{env.APP_CONFIG}} "${{secrets.SERVER_USER}}@${{secrets.SERVER_HOST}}:$DEST/${{env.APP_CONFIG}}"
     - name: Deploy with compose (uses the file)
       run: |
         ssh -o StrictHostKeyChecking=accept-new "${{secrets.SERVER_USER}}@${{secrets.SERVER_HOST}}" "bash -lc '
           cd /home/${{secrets.SERVER_USER}}/atom-test-ldap
-          docker compose --env-file ./env/prod.env pull
-          docker compose --env-file ./env/prod.env up -d --remove-orphans
+          docker compose --env-file ./${{env.APP_CONFIG}} pull
+          docker compose --env-file ./${{env.APP_CONFIG}} up -d --remove-orphans
         '"
   notify_success:
     runs-on: ubuntu-latest

@@ -1,3 +1,4 @@
+import os
 import typing
 from pydantic import BaseModel
 from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -6,7 +7,7 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 if typing.TYPE_CHECKING:
     from app.lib import FastAPI
 
-ENV_PATH = "env/.local.env"
+LOCAL_ENV_PATH = "env/.local.env"
 EXAMPLE_ENV_PATH = "env/.example.env"
 
 
@@ -57,4 +58,5 @@ class BaseConfig(BaseSettings):
 
 
 def setup_config(app: "FastAPI"):
-    app.config = BaseConfig(_env_file=(EXAMPLE_ENV_PATH, ENV_PATH))
+    config_path = os.getenv("APP_CONFIG", LOCAL_ENV_PATH)
+    app.config = BaseConfig(_env_file=(EXAMPLE_ENV_PATH, config_path))

@@ -4,6 +4,7 @@ services:
   backend: 
     build: ./
     environment:
+      - APP__CONFIG=${APP__CONFIG}
       - APP__LDAP__HOST=ldap
       - APP__PG__HOST=postgres
       - APP__PG__PORT=5432
