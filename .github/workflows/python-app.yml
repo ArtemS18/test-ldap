@@ -95,7 +95,7 @@ jobs:
           "${GITHUB_WORKSPACE}/" "${{secrets.SERVER_USER}}@ ${{secrets.SERVER_HOST}}:/srv/atom-test-ldap/"
     - name: Deploy in remote server
       run: |
-          ssh "${{secrets.SERVER_USER}}@ ${{secrets.SERVER_HOST}}" \
+          ssh "${{secrets.SERVER_USER}}@${{secrets.SERVER_HOST}}" \
           "bash -lc 'cd /srv/atom-test-ldap && docker compose --env-file ./env/local.env pull && docker compose --env-file ./env/local.env up -d --remove-orphans'"
       
   notify_success:
