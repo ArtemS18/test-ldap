@@ -96,7 +96,7 @@ jobs:
     - name: Deploy in remote server
       run: |
         ssh -o StrictHostKeyChecking=accept-new "${{secrets.SERVER_USER}}@${{secrets.SERVER_HOST}}" bash -lc '
-          cd /home/${secrets.SERVER_USER}/atom-test-ldap
+          cd /home/${{secrets.SERVER_USER}}/atom-test-ldap
           export APP__PG__HOST="${APP__PG__HOST}"
           export APP__PG__PORT="${APP__PG__PORT}"
           export APP__PG__LOGIN="${APP__PG__LOGIN}"
