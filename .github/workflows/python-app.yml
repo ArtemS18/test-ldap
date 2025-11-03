@@ -20,8 +20,8 @@ env:
   APP__PG__HOST: localhost
   APP__PG__PORT: 5434
   APP__PG__LOGIN: ${{ secrets.APP__PG__LOGIN }}
-  APP__PG__PASSWORD: ${{ secrets.APP__PG__PASSWORD }}
-  APP__PG__BASE_DB: db
+  APP__PG__PASSWORD: changeme #${{ secrets.APP__PG__PASSWORD }}
+  APP__PG__BASE_DB:
 
   APP__LDAP__HOST: localhost
   APP__LDAP__PORT: 389
