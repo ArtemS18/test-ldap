@@ -1,4 +1,3 @@
-import time
 from typing import AsyncGenerator
 from ldap3 import Server, ALL, Connection
 import asyncio

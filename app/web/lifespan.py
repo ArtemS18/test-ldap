@@ -1,5 +1,4 @@
 from contextlib import asynccontextmanager
-from app.base.orm_base import BaseORM
 import logging
 import typing
 

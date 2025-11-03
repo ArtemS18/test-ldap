@@ -5,10 +5,11 @@ LONG_LOGGER_FORMAT = "[%(asctime)s.%(msecs)03d] [%(processName)s] %(levelname)s 
 DATE_FORMAT = "%Y-%m-%d %H:%M:%S"
 LOGGER_LEVEL = "INFO"
 
+
 def setup_logger():
     base_logger = getLogger()
     base_logger.setLevel(LOGGER_LEVEL)
-    
+
     stream_handler = StreamHandler()
 
     stream_formatter = Formatter(LONG_LOGGER_FORMAT, DATE_FORMAT)
