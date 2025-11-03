@@ -92,11 +92,11 @@ jobs:
           --exclude=".git" \
           --exclude=".github" \
           -e "ssh -o StrictHostKeyChecking=accept-new" \
-          "${GITHUB_WORKSPACE}/" "${{secrets.SERVER_USER}}@${{secrets.SERVER_HOST}}:/srv/atom-test-ldap/"
+          "${GITHUB_WORKSPACE}/" "${{secrets.SERVER_USER}}@${{secrets.SERVER_HOST}}:/home/${{secrets.SERVER_USER}}/atom-test-ldap/"
     - name: Deploy in remote server
       run: |
           ssh "${{secrets.SERVER_USER}}@${{secrets.SERVER_HOST}}" \
-          "bash -lc 'cd /srv/atom-test-ldap && docker compose --env-file ./env/local.env pull && docker compose --env-file ./env/local.env up -d --remove-orphans'"
+          "bash -lc 'cd /home/${{secrets.SERVER_USER}}/atom-test-ldap && docker compose --env-file ./env/local.env pull && docker compose --env-file ./env/local.env up -d --remove-orphans'"
       
   notify_success:
     runs-on: ubuntu-latest
