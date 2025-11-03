@@ -80,11 +80,11 @@ jobs:
       with:
         ssh-private-key: ${{ secrets.SERVER_PRIVATE_KEY }}
 
-    - name: Add server to known_hosts
-      run: |
-        mkdir -p ~/.ssh
-        ssh-keyscan " ${{secrets.SERVER_HOST}}" >> ~/.ssh/known_hosts
-        chmod 600 ~/.ssh/known_hosts
+    # - name: Add server to known_hosts
+    #   run: |
+    #     mkdir -p ~/.ssh
+    #     ssh-keyscan " ${{secrets.SERVER_HOST}}" >> ~/.ssh/known_hosts
+    #     chmod 600 ~/.ssh/known_hosts
     - name: Rsync project
       run: |
         set -e
@@ -94,29 +94,40 @@ jobs:
           --exclude=".github" \
           -e "ssh -o StrictHostKeyChecking=accept-new" \
           "${GITHUB_WORKSPACE}/" "${{secrets.SERVER_USER}}@${{secrets.SERVER_HOST}}:/home/${{secrets.SERVER_USER}}/atom-test-ldap/"
-    - name: Deploy in remote server
+    - name: Build .env on runner
       run: |
-        ssh -o StrictHostKeyChecking=accept-new "${{secrets.SERVER_USER}}@${{secrets.SERVER_HOST}}" bash -lc '
+        umask 177; mkdir -p env
+        {
+          echo "APP__WEB__PORT=${{ env.APP__WEB__PORT }}"
+          echo "APP__PG__HOST=${{ env.APP__PG__HOST }}"
+          echo "APP__PG__PORT=${{ env.APP__PG__PORT }}"
+          echo "APP__PG__LOGIN=${{ env.APP__PG__LOGIN }}"
+          echo "APP__PG__PASSWORD=${{ env.APP__PG__PASSWORD }}"
+          echo "APP__PG__BASE_DB=${{ env.APP__PG__BASE_DB }}"
+          echo "APP__LDAP__HOST=${{ env.APP__LDAP__HOST }}"
+          echo "APP__LDAP__PORT=${{ env.APP__LDAP__PORT }}"
+          echo "APP__LDAP__LOGIN=${{ env.APP__LDAP__LOGIN }}"
+          echo "APP__LDAP__PASSWORD=${{ env.APP__LDAP__PASSWORD }}"
+          echo "APP__LDAP__BASE_DN=${{ env.APP__LDAP__BASE_DN }}"
+          echo "APP__LDAP__ORGANISATION=${{ env.APP__LDAP__ORGANISATION }}"
+          echo "APP__LDAP__DOMAIN=${{ env.APP__LDAP__DOMAIN }}"
+          echo "APP__WEB__JWT__ACCESS_EXPIRE=${{ env.APP__WEB__JWT__ACCESS_EXPIRE }}"
+          echo "APP__WEB__JWT__SECRET_KEY=${{ env.APP__WEB__JWT__SECRET_KEY }}"
+          echo "APP__WEB__JWT__ALGORITHM=${{ env.APP__WEB__JWT__ALGORITHM }}"
+        } > env/prod.env
+    - name: Upload .env to server
+      run: |
+        DEST="/home/${{secrets.SERVER_USER}}/atom-test-ldap/env"
+        ssh -o StrictHostKeyChecking=accept-new "${{secrets.SERVER_USER}}@${{secrets.SERVER_HOST}}" "mkdir -p '$DEST' && chmod 700 '$DEST'"
+        scp -o StrictHostKeyChecking=accept-new env/prod.env "${{secrets.SERVER_USER}}@${{secrets.SERVER_HOST}}:$DEST/prod.env.new"
+        ssh -o StrictHostKeyChecking=accept-new "${{secrets.SERVER_USER}}@${{secrets.SERVER_HOST}}" "mv -f '$DEST/prod.env.new' '$DEST/prod.env' && chmod 600 '$DEST/prod.env'"
+    - name: Deploy with compose (uses the file)
+      run: |
+        ssh -o StrictHostKeyChecking=accept-new "${{secrets.SERVER_USER}}@${{secrets.SERVER_HOST}}" "bash -lc '
           cd /home/${{secrets.SERVER_USER}}/atom-test-ldap
-          export APP__WEB__PORT="${APP__WEB__PORT}"
-          export APP__PG__HOST="${APP__PG__HOST}"
-          export APP__PG__PORT="${APP__PG__PORT}"
-          export APP__PG__LOGIN="${APP__PG__LOGIN}"
-          export APP__PG__PASSWORD="${APP__PG__PASSWORD}"
-          export APP__PG__BASE_DB="${APP__PG__BASE_DB}"
-          export APP__LDAP__HOST="${APP__LDAP__HOST}"
-          export APP__LDAP__PORT="${APP__LDAP__PORT}"
-          export APP__LDAP__LOGIN="${APP__LDAP__LOGIN}"
-          export APP__LDAP__PASSWORD="${APP__LDAP__PASSWORD}"
-          export APP__LDAP__BASE_DN="${APP__LDAP__BASE_DN}"
-          export APP__LDAP__ORGANISATION="${APP__LDAP__ORGANISATION}"
-          export APP__LDAP__DOMAIN="${APP__LDAP__DOMAIN}"
-          export APP__WEB__JWT__ACCESS_EXPIRE="${APP__WEB__JWT__ACCESS_EXPIRE}"
-          export APP__WEB__JWT__SECRET_KEY="${APP__WEB__JWT__SECRET_KEY}"
-          export APP__WEB__JWT__ALGORITHM="${APP__WEB__JWT__ALGORITHM}"
-          docker compose pull
-          docker compose up -d --remove-orphans
-        '
+          docker compose --env-file ./env/prod.env pull
+          docker compose --env-file ./env/prod.env up -d --remove-orphans
+        '"
   notify_success:
     runs-on: ubuntu-latest
     needs: deploy
