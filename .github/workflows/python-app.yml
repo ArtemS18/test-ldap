@@ -19,6 +19,7 @@ env:
   APP__WEB__PORT: 8080
   APP__PG__HOST: localhost
   APP__PG__PORT: 5434
+  
   APP__PG__LOGIN: ${{ secrets.APP__PG__LOGIN }}
   APP__PG__PASSWORD: changeme #${{ secrets.APP__PG__PASSWORD }}
   APP__PG__BASE_DB: db
