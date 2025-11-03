@@ -93,6 +93,9 @@ jobs:
         rsync -az --delete \
           --exclude=".git" \
           --exclude=".github" \
+          --exclude='ldap_config' \
+          --exclude='ldap_data' \
+          --no-owner --no-group --omit-dir-times \
           -e "ssh -o StrictHostKeyChecking=accept-new" \
           "${GITHUB_WORKSPACE}/" "${{secrets.SERVER_USER}}@${{secrets.SERVER_HOST}}:/home/${{secrets.SERVER_USER}}/atom-test-ldap/"
     - name: Build .env on runner

@@ -2,3 +2,5 @@ docker-compose.yaml
 .vscode/
 __pycache__/
 .ruff_cache/
+ldap_config/
+ldap_data/
