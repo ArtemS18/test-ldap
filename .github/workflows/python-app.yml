@@ -91,7 +91,7 @@ jobs:
         rsync -az --delete \
           --exclude=".git" \
           --exclude=".github" \
-          -e "ssh -o StrictHostKeyChecking=accept-new \
+          -e "ssh -o StrictHostKeyChecking=accept-new" \
           "${GITHUB_WORKSPACE}/" "${{secrets.SERVER_USER}}@ ${{secrets.SERVER_HOST}}:/srv/atom-test-ldap/"
     - name: Deploy in remote server
       run: |
