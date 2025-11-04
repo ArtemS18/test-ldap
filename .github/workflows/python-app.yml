@@ -89,7 +89,7 @@ jobs:
           -e "ssh -o StrictHostKeyChecking=accept-new" \
           "${GITHUB_WORKSPACE}/" "${{env.SERVER_USER}}@${{env.SERVER_HOST}}:${{env.SERVER_PATH}}"
     - name: Build .env on runner
-      run: |
+      run: | # добавляем в енв секретные переменные
         umask 177; mkdir -p env
         {
           echo "APP__CONFIG=${{env.APP__CONFIG}}"

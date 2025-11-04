@@ -6,7 +6,7 @@ from app.ord.schemas.order import OrderCreate, OrderListResponse, OrderResponse
 from app.lib.web import exeptions
 
 router = APIRouter(
-    prefix="/ord",
+    prefix="/ords",
     tags=["Валидация роли"],
     dependencies=[Depends(validate_role("Admin", "Moderator"))],
 )
