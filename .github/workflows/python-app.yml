@@ -17,6 +17,7 @@ env:
   PYTHONPATH: .\
   APP_CONFIG: "env/pod.env"
   APP__WEB__PORT: 8080
+  APP__WEB__HOST: 0.0.0.0
   APP__PG__HOST: localhost
   APP__PG__PORT: 5434
 
@@ -105,6 +106,7 @@ jobs:
         {
           echo "APP_CONFIG=${{env.APP_CONFIG}}"
           echo "APP__WEB__PORT=${{ env.APP__WEB__PORT }}"
+          echo "APP__WEB__HOST=${{ env.APP__WEB__HOST }}"
           echo "APP__PG__HOST=${{ env.APP__PG__HOST }}"
           echo "APP__PG__PORT=${{ env.APP__PG__PORT }}"
           echo "APP__PG__LOGIN=${{ env.APP__PG__LOGIN }}"
