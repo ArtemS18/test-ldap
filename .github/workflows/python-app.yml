@@ -75,7 +75,7 @@ jobs:
     - name: Setup SSH
       uses: webfactory/ssh-agent@v0.9.0
       with:
-        ssh-private-key: ${SERVER_PRIVATE_KEY}
+        ssh-private-key: ${{env.SERVER_PRIVATE_KEY}}
     - name: Rsync project
       run: |
         set -e
