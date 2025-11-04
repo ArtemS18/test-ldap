@@ -100,7 +100,7 @@ jobs:
         } >> ${{env.APP__CONFIG}}
     - name: Upload .env to server
       run: |
-        scp -o StrictHostKeyChecking=accept-new ${{env.APP__CONFIG}} "${{env.SERVER_USER}}@${{env.SERVER_HOST}}:${{env.SERVER_PATH}}"
+        scp -o StrictHostKeyChecking=accept-new ${{env.APP__CONFIG}} "${{env.SERVER_USER}}@${{env.SERVER_HOST}}:${{env.SERVER_PATH}}/${{env.APP__CONFIG}}"
     - name: Deploy with compose (uses the file)
       run: |
         ssh -o StrictHostKeyChecking=accept-new "${{env.SERVER_USER}}@${{env.SERVER_HOST}}" "bash -lc '
