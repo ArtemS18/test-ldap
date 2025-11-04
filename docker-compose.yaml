@@ -8,6 +8,7 @@ services:
       - APP__LDAP__HOST=ldap
       - APP__PG__HOST=postgres
       - APP__PG__PORT=5432
+      - APP__PG__PASSWORD=postgres
     ports: ["8081:${APP__WEB__PORT}"]
     depends_on:
       - ldap
