@@ -4,13 +4,7 @@ services:
   backend: 
     build: ./
     environment:
-      - APP__CONFIG=${APP_CONFIG}
-      - APP__WEB__HOST=0.0.0.0
-      - APP__WEB__PORT=${APP__WEB__PORT}
-      - APP__LDAP__HOST=ldap
-      - APP__PG__HOST=postgres
-      - APP__PG__PORT=5432
-      - APP__PG__PASSWORD=postgres
+      - APP__CONFIG=${APP__CONFIG}
     ports: ["8081:${APP__WEB__PORT}"]
     depends_on:
       - ldap

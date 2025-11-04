@@ -58,5 +58,5 @@ class BaseConfig(BaseSettings):
 
 
 def setup_config(app: "FastAPI"):
-    config_path = os.getenv("APP_CONFIG", LOCAL_ENV_PATH)
+    config_path = os.getenv("APP__CONFIG", LOCAL_ENV_PATH)
     app.config = BaseConfig(_env_file=(EXAMPLE_ENV_PATH, config_path))

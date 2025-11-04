@@ -15,27 +15,20 @@ permissions:
 
 env:
   PYTHONPATH: .\
-  APP_CONFIG: "env/pod.env"
-  APP__WEB__PORT: 8080
-  APP__WEB__HOST: 0.0.0.0
-  APP__PG__HOST: localhost
-  APP__PG__PORT: 5434
-
+  APP__CONFIG: "env/pod.env"
   APP__PG__LOGIN: ${{ secrets.APP__PG__LOGIN }}
-  APP__PG__PASSWORD: postgres #${{ secrets.APP__PG__PASSWORD }}
-  APP__PG__BASE_DB: db
+  APP__PG__PASSWORD: ${{ secrets.APP__PG__PASSWORD }}
 
-  APP__LDAP__HOST: localhost
-  APP__LDAP__PORT: 389
   APP__LDAP__LOGIN: cn=admin,dc=mycompany,dc=local
   APP__LDAP__PASSWORD: ${{ secrets.APP__LDAP__PASSWORD }}
-  APP__LDAP__BASE_DN: dc=mycompany,dc=local
-  APP__LDAP__ORGANISATION: MyCompany
-  APP__LDAP__DOMAIN: mycompany.local
   
-  APP__WEB__JWT__ACCESS_EXPIRE: 1
   APP__WEB__JWT__SECRET_KEY: ${{ secrets.APP__WEB__JWT__SECRET_KEY }}
-  APP__WEB__JWT__ALGORITHM: HS256
+
+  SERVER_PRIVATE_KEY: ${{ secrets.SERVER_PRIVATE_KEY }}
+  SERVER_USER: ${{secrets.SERVER_USER}}
+  SERVER_HOST: ${{secrets.SERVER_HOST}}
+
+  SERVER_PATH: /home/${{secrets.SERVER_USER}}/atom-test-ldap/
 
 jobs:
   # lint:
@@ -73,6 +66,7 @@ jobs:
 
   deploy:
     #needs: tests
+    if: success()
     runs-on: ubuntu-latest
     steps:
     - name: Checkout repo
@@ -81,17 +75,10 @@ jobs:
     - name: Setup SSH
       uses: webfactory/ssh-agent@v0.9.0
       with:
-        ssh-private-key: ${{ secrets.SERVER_PRIVATE_KEY }}
-
-    # - name: Add server to known_hosts
-    #   run: |
-    #     mkdir -p ~/.ssh
-    #     ssh-keyscan " ${{secrets.SERVER_HOST}}" >> ~/.ssh/known_hosts
-    #     chmod 600 ~/.ssh/known_hosts
+        ssh-private-key: ${SERVER_PRIVATE_KEY}
     - name: Rsync project
       run: |
         set -e
-        ls -la "${GITHUB_WORKSPACE}"
         rsync -az --delete \
           --exclude=".git" \
           --exclude=".github" \
@@ -99,40 +86,27 @@ jobs:
           --exclude='ldap_data' \
           --no-owner --no-group --omit-dir-times \
           -e "ssh -o StrictHostKeyChecking=accept-new" \
-          "${GITHUB_WORKSPACE}/" "${{secrets.SERVER_USER}}@${{secrets.SERVER_HOST}}:/home/${{secrets.SERVER_USER}}/atom-test-ldap/"
+          "${GITHUB_WORKSPACE}/" "${{env.SERVER_USER}}@${{env.SERVER_HOST}}:${{env.SERVER_PATH}}"
     - name: Build .env on runner
       run: |
         umask 177; mkdir -p env
         {
-          echo "APP_CONFIG=${{env.APP_CONFIG}}"
-          echo "APP__WEB__PORT=${{ env.APP__WEB__PORT }}"
-          echo "APP__WEB__HOST=${{ env.APP__WEB__HOST }}"
-          echo "APP__PG__HOST=${{ env.APP__PG__HOST }}"
-          echo "APP__PG__PORT=${{ env.APP__PG__PORT }}"
-          echo "APP__PG__LOGIN=${{ env.APP__PG__LOGIN }}"
-          echo "APP__PG__PASSWORD=${{ env.APP__PG__PASSWORD }}"
-          echo "APP__PG__BASE_DB=${{ env.APP__PG__BASE_DB }}"
-          echo "APP__LDAP__HOST=${{ env.APP__LDAP__HOST }}"
-          echo "APP__LDAP__PORT=${{ env.APP__LDAP__PORT }}"
-          echo "APP__LDAP__LOGIN=${{ env.APP__LDAP__LOGIN }}"
-          echo "APP__LDAP__PASSWORD=${{ env.APP__LDAP__PASSWORD }}"
-          echo "APP__LDAP__BASE_DN=${{ env.APP__LDAP__BASE_DN }}"
-          echo "APP__LDAP__ORGANISATION=${{ env.APP__LDAP__ORGANISATION }}"
-          echo "APP__LDAP__DOMAIN=${{ env.APP__LDAP__DOMAIN }}"
-          echo "APP__WEB__JWT__ACCESS_EXPIRE=${{ env.APP__WEB__JWT__ACCESS_EXPIRE }}"
-          echo "APP__WEB__JWT__SECRET_KEY=${{ env.APP__WEB__JWT__SECRET_KEY }}"
-          echo "APP__WEB__JWT__ALGORITHM=${{ env.APP__WEB__JWT__ALGORITHM }}"
-        } > ${{env.APP_CONFIG}}
+          echo "APP__CONFIG=${{env.APP__CONFIG}}"
+          echo "APP__PG__LOGIN=${{ env.APP__PG__LOGIN}}"
+          echo "APP__PG__PASSWORD=${{ env.APP__PG__PASSWORD}}"
+          echo "APP__LDAP__LOGIN=${{ env.APP__LDAP__LOGIN}}"
+          echo "APP__LDAP__PASSWORD=${{ env.APP__LDAP__PASSWORD}}"
+          echo "APP__WEB__JWT__SECRET_KEY=${{ env.APP__WEB__JWT__SECRET_KEY}}"
+        } >> ${{env.APP__CONFIG}}
     - name: Upload .env to server
       run: |
-        DEST="/home/${{secrets.SERVER_USER}}/atom-test-ldap/"
-        scp -o StrictHostKeyChecking=accept-new ${{env.APP_CONFIG}} "${{secrets.SERVER_USER}}@${{secrets.SERVER_HOST}}:$DEST/${{env.APP_CONFIG}}"
+        scp -o StrictHostKeyChecking=accept-new ${{env.APP__CONFIG}} "${{env.SERVER_USER}}@${{env.SERVER_HOST}}:${{env.SERVER_PATH}}"
     - name: Deploy with compose (uses the file)
       run: |
-        ssh -o StrictHostKeyChecking=accept-new "${{secrets.SERVER_USER}}@${{secrets.SERVER_HOST}}" "bash -lc '
-          cd /home/${{secrets.SERVER_USER}}/atom-test-ldap
-          docker compose --env-file ./${{env.APP_CONFIG}} pull
-          docker compose --env-file ./${{env.APP_CONFIG}} up -d --remove-orphans
+        ssh -o StrictHostKeyChecking=accept-new "${{env.SERVER_USER}}@${{env.SERVER_HOST}}" "bash -lc '
+          cd ${{env.SERVER_PATH}}
+          docker compose --env-file ./${{env.APP__CONFIG}} pull
+          docker compose --env-file ./${{env.APP__CONFIG}} up -d --remove-orphans
         '"
   notify_success:
     runs-on: ubuntu-latest
