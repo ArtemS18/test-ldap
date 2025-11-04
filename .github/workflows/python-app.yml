@@ -106,7 +106,7 @@ jobs:
         ssh -o StrictHostKeyChecking=accept-new "${{env.SERVER_USER}}@${{env.SERVER_HOST}}" "bash -lc '
           cd ${{env.SERVER_PATH}}
           docker compose --env-file ./${{env.APP__CONFIG}} pull
-          docker compose --env-file ./${{env.APP__CONFIG}} up -d --remove-orphans
+          docker compose --env-file ./${{env.APP__CONFIG}} up -d --build --remove-orphans
         '"
   notify_success:
     runs-on: ubuntu-latest
